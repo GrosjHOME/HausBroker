@@ -1,0 +1,15 @@
+[Unit]
+Description=HausBroker-Bridge (Val Town -> MQTT)
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hausbroker
+EnvironmentFile=/etc/hausbroker/bridge.env
+ExecStart=/usr/bin/python3 /opt/hausbroker/bridge/hausbroker_bridge.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

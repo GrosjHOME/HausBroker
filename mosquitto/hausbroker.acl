@@ -1,0 +1,16 @@
+# Zugriffsrechte HausBroker -> /etc/mosquitto/hausbroker.acl
+# Jede Steuerung darf nur ihr eigenes Online-Topic schreiben und lesen, was sie braucht.
+
+# Bridge (Raspberry Pi): schreibt alles unter haus/
+user bridge
+topic readwrite haus/#
+
+# Austragungssteuerung (Arduino Mega Heizung)
+user heizung
+topic read haus/heizung/asche
+topic readwrite haus/heizung/online
+
+# Zum Mitlesen und Testen (mosquitto_sub auf dem Pi oder am PC)
+user stefan
+topic read haus/#
+topic read $SYS/#
