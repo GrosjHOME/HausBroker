@@ -35,12 +35,30 @@ auf dem LCD und an der Störlampe anzeigt.
 | `haus/heizung/asche/json` | ja | ganze Prognose aus Val Town (JSON) | Bridge |
 | `haus/bridge/online` | ja | `1` / `0` (Last Will) | Bridge |
 | `haus/heizung/online` | ja | `1` / `0` (Last Will) | Austragungssteuerung |
+| `haus/pv/leistung` | **nein** | aktuelle PV-Leistung in W, z. B. `2400` (`0` nachts) | PV-Anlage → Boilersteuerung |
+| `haus/pv/energie/tag` `…/monat` `…/jahr` `…/gestern` `…/letzter_monat` | ja | Energie in kWh, eine Nachkommastelle | PV-Anlage |
+| `haus/pv/online` | ja | `1` / `0` (Last Will) | PV-Anlage |
+| `haus/boiler/online` | ja | `1` / `0` (Last Will) | Boilersteuerung |
 
 `prozent` und `tage_bis_voll`: `-1` = unbekannt (keine Prognose, ausserhalb
 der Heizsaison oder Prognose älter als 120 min), `tage_bis_voll` `0` = jetzt
 bzw. heute voll, `999` = über 120 Tage (z. B. direkt nach einer Leerung).
 Die Bridge publiziert alle 5 min neu, auch unverändert: Kommt bei der
 Steuerung 45 min nichts, gilt der Wert als veraltet.
+
+### PV-Leistung für den Boiler
+
+Die PV-Anlage veröffentlicht dieselben Werte wie auf ThingSpeak (Felder 1–6)
+einmal pro Minute. `haus/pv/leistung` ist bewusst **nicht retained**: Jede
+Nachricht, die ankommt, ist frisch. Eine retained Nachricht hätte kein Alter,
+der Boiler könnte einen gestrigen Wert nicht erkennen.
+
+Die Boilersteuerung nimmt die PV-Leistung **zuerst vom Broker**. Sie gilt, wenn
+die letzte Nachricht höchstens 150 s alt ist und `haus/pv/online` nicht `0`
+ist. Sonst (Broker weg, PV-Steuerung weg, Netz gestört) liest sie den Wert
+wie bisher von **ThingSpeak** (Kanal 172430, Feld 1). Beide Wege sind
+unabhängig: Fällt der Pi aus, ändert sich für den Boiler nichts ausser der
+Quelle; sie steht im ThingSpeak-Status des Boiler-Kanals.
 
 ## Einrichtung
 
@@ -69,8 +87,10 @@ sudo ./setup.sh
 ```
 
 `setup.sh` installiert Mosquitto und die Bridge, legt die MQTT-Benutzer an
-(`bridge` mit Zufallspasswort, `heizung` und `stefan` fragt es nach) und
-startet beide Dienste. Es darf mehrfach laufen.
+(`bridge` mit Zufallspasswort, `heizung`, `pv`, `boiler` und `stefan` fragt es
+nach; bereits vorhandene Benutzer bleiben unverändert) und startet beide
+Dienste. Es darf mehrfach laufen. Jedes Passwort kommt in die `Secrets.h` der
+jeweiligen Steuerung.
 
 Die Web-Adresse von `heizung.ts` steht schon in `/etc/hausbroker/bridge.env`
 (`HEIZUNG_URL`, gleich wie `ASCHE.URL` im Dashboard).
@@ -115,9 +135,10 @@ Später, wenn alles läuft, eine der beiden Varianten:
 ## Nächste Schritte
 
 1. Weitere Steuerungen publizieren ihre Messwerte zusätzlich per MQTT
-   (`haus/pv/…`, `haus/boiler/…`).
-2. Steuerungen, die heute über ThingSpeak Werte anderer Steuerungen holen
-   (Boiler: PV-Leistung), abonnieren sie lokal, ThingSpeak als Rückfall.
+   (PV-Anlage: erledigt; Boiler, Wallbox, Pumpwerk: offen).
+2. Steuerungen, die heute über ThingSpeak Werte anderer Steuerungen holen,
+   abonnieren sie lokal, ThingSpeak als Rückfall (Boiler: PV-Leistung,
+   erledigt; Wallbox: offen).
 3. Die Bridge schreibt an ThingSpeak, die Arduinos nicht mehr. Damit gibt es
    je Kanal nur noch einen Schreiber (kein Zeitlimit-Konflikt), und die Bridge
    kann bei Internet-Ausfall puffern und nachliefern.

@@ -46,6 +46,8 @@ else
   benutzer_anlegen bridge "$(sed -n 's/^MQTT_PASS=//p' "$ENVF")"
 fi
 benutzer_anlegen heizung ""   # dieses Passwort kommt in Secrets.h der Austragungssteuerung
+benutzer_anlegen pv ""        # dieses Passwort kommt in Secrets.h der PV-Anlage
+benutzer_anlegen boiler ""    # dieses Passwort kommt in Secrets.h der Boilersteuerung
 benutzer_anlegen stefan ""    # zum Mitlesen
 chmod 640 "$PASSWD"
 
