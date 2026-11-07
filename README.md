@@ -86,6 +86,12 @@ mosquitto_sub -h localhost -u stefan -P <passwort> -t 'haus/#' -v
 Vom PC aus geht dasselbe mit `mosquitto_sub -h <ip-des-pi> …` oder einem
 MQTT-Programm wie MQTT Explorer.
 
+Im Browser geht es über WebSocket: z. B. mit MQTTX Web (<https://mqttx.app/web-client>)
+eine Verbindung anlegen mit Host `ws://hausbroker.local` (oder `ws://192.168.0.50`),
+Port `9001`, Pfad `/mqtt`, Benutzer und Passwort wie oben. Hinweis: Eine Seite, die
+über HTTPS geladen ist, darf kein unverschlüsseltes `ws://` öffnen – dann die
+http-Variante des Web-Clients nehmen oder MQTTX als Desktop-App.
+
 Updates: `cd HausBroker && git pull && sudo ./setup.sh`.
 
 ## SD-Karte
