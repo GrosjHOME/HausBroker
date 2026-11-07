@@ -35,8 +35,8 @@ auf dem LCD und an der Störlampe anzeigt.
 | `haus/heizung/asche/json` | ja | ganze Prognose aus Val Town (JSON) | Bridge |
 | `haus/bridge/online` | ja | `1` / `0` (Last Will) | Bridge |
 | `haus/heizung/online` | ja | `1` / `0` (Last Will) | Austragungssteuerung |
-| `haus/pv/leistung` | **nein** | aktuelle PV-Leistung in W, z. B. `2400` (`0` nachts) | PV-Anlage → Boilersteuerung |
-| `haus/pv/energie/tag` `…/monat` `…/jahr` `…/gestern` `…/letzter_monat` | ja | Energie in kWh, eine Nachkommastelle | PV-Anlage |
+| `haus/pv/leistung` | **nein** | aktuelle PV-Leistung in W, z. B. `2400` (`0` nachts), alle 2 s | PV-Anlage → Boilersteuerung |
+| `haus/pv/energie/tag` `…/monat` `…/jahr` `…/gestern` `…/letzter_monat` | ja | Energie in kWh, eine Nachkommastelle, einmal pro Minute | PV-Anlage |
 | `haus/pv/online` | ja | `1` / `0` (Last Will) | PV-Anlage |
 | `haus/boiler/online` | ja | `1` / `0` (Last Will) | Boilersteuerung |
 
@@ -48,13 +48,13 @@ Steuerung 45 min nichts, gilt der Wert als veraltet.
 
 ### PV-Leistung für den Boiler
 
-Die PV-Anlage veröffentlicht dieselben Werte wie auf ThingSpeak (Felder 1–6)
-einmal pro Minute. `haus/pv/leistung` ist bewusst **nicht retained**: Jede
+Die PV-Anlage veröffentlicht die Werte von ThingSpeak (Felder 1–6): die Leistung
+alle 2 s, die Energiewerte einmal pro Minute. `haus/pv/leistung` ist bewusst **nicht retained**: Jede
 Nachricht, die ankommt, ist frisch. Eine retained Nachricht hätte kein Alter,
 der Boiler könnte einen gestrigen Wert nicht erkennen.
 
 Die Boilersteuerung nimmt die PV-Leistung **zuerst vom Broker**. Sie gilt, wenn
-die letzte Nachricht höchstens 150 s alt ist und `haus/pv/online` nicht `0`
+die letzte Nachricht höchstens 30 s alt ist und `haus/pv/online` nicht `0`
 ist. Sonst (Broker weg, PV-Steuerung weg, Netz gestört) liest sie den Wert
 wie bisher von **ThingSpeak** (Kanal 172430, Feld 1). Beide Wege sind
 unabhängig: Fällt der Pi aus, ändert sich für den Boiler nichts ausser der
