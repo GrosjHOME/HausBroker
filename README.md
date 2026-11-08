@@ -39,6 +39,13 @@ auf dem LCD und an der Störlampe anzeigt.
 | `haus/pv/energie/tag` `…/monat` `…/jahr` `…/gestern` `…/letzter_monat` | ja | Energie in kWh, eine Nachkommastelle, einmal pro Minute | PV-Anlage |
 | `haus/pv/online` | ja | `1` / `0` (Last Will) | PV-Anlage |
 | `haus/boiler/online` | ja | `1` / `0` (Last Will) | Boilersteuerung |
+| `haus/boiler/temp_mitte` `…/temp_unten` | ja | Boilertemperatur in °C, eine Nachkommastelle, einmal pro Minute (bei Sensorfehler nicht gesendet) | Boilersteuerung |
+| `haus/boiler/ladeleistung` | ja | aktuelle Ladestufe in W (`0` / `1000` / `1800` / `4000`) | Boilersteuerung |
+| `haus/boiler/einschaltleistung` | ja | minimale PV-Leistung zum Einschalten in W | Boilersteuerung |
+| `haus/boiler/pv_verwendet` | ja | PV-Wert in W, mit dem die Steuerung rechnet | Boilersteuerung |
+| `haus/boiler/pv_quelle` | ja | `mqtt` oder `thingspeak` | Boilersteuerung |
+| `haus/boiler/voll` | ja | `1` = Boiler voll geladen, sonst `0` | Boilersteuerung |
+| `haus/boiler/sensorfehler` | ja | `1` = Temperatursensor defekt, sonst `0` | Boilersteuerung |
 
 `prozent` und `tage_bis_voll`: `-1` = unbekannt (keine Prognose, ausserhalb
 der Heizsaison oder Prognose älter als 120 min), `tage_bis_voll` `0` = jetzt

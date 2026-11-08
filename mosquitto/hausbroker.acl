@@ -14,11 +14,11 @@ topic readwrite haus/heizung/online
 user pv
 topic write haus/pv/#
 
-# Boilersteuerung (Arduino Mega): liest die PV-Leistung, meldet sich mit haus/boiler/online
+# Boilersteuerung (Arduino Mega): liest die PV-Leistung, schreibt ihre Werte unter haus/boiler/# (inkl. online + Last Will)
 user boiler
 topic read haus/pv/leistung
 topic read haus/pv/online
-topic readwrite haus/boiler/online
+topic write haus/boiler/#
 
 # Zum Mitlesen und Testen (mosquitto_sub auf dem Pi oder am PC)
 user stefan
