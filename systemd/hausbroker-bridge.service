@@ -6,6 +6,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=hausbroker
+# /var/lib/hausbroker: Warteschlange der Pumpwerk-Ereignisse (ueberlebt Neustart und Internetausfall)
+StateDirectory=hausbroker
 EnvironmentFile=/etc/hausbroker/bridge.env
 ExecStart=/usr/bin/python3 /opt/hausbroker/bridge/hausbroker_bridge.py
 Restart=always

@@ -45,6 +45,14 @@ if [ ! -f "$ENVF" ]; then
 else
   benutzer_anlegen bridge "$(sed -n 's/^MQTT_PASS=//p' "$ENVF")"
 fi
+# Neue Einstellungen in eine bestehende bridge.env nachtragen (die Datei wird sonst nie ueberschrieben)
+if ! grep -q '^PUMPWERK_URL=' "$ENVF"; then
+  {
+    echo "# Pumpwerk-Ereignisse an Val Town (pumpwerk.ts): PUMPWERK_TOKEN = Passwort wie im Val eintragen"
+    sed -n 's/^\(PUMPWERK_URL=.*\)$/\1/p;s/^\(PUMPWERK_TOKEN=.*\)$/\1/p' "$REPO/bridge/bridge.env.example"
+  } >> "$ENVF"
+  echo "Hinweis: PUMPWERK_TOKEN in $ENVF eintragen, sonst bleibt die Weitergabe der Pumpwerk-Ereignisse aus."
+fi
 benutzer_anlegen heizung ""   # dieses Passwort kommt in Secrets.h der Austragungssteuerung
 benutzer_anlegen pv ""        # dieses Passwort kommt in Secrets.h der PV-Anlage
 benutzer_anlegen boiler ""    # dieses Passwort kommt in Secrets.h der Boilersteuerung

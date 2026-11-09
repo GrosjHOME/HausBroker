@@ -75,6 +75,33 @@ wie bisher von **ThingSpeak** (Kanal 172430, Feld 1). Beide Wege sind
 unabhängig: Fällt der Pi aus, ändert sich für den Boiler nichts ausser der
 Quelle; sie steht im ThingSpeak-Status des Boiler-Kanals.
 
+### Pumpwerk-Ereignisse nach Val Town
+
+Der Pumpwerk-Logger misst jede Pause zwischen zwei Einschaltungen auf die Millisekunde und
+meldet jedes Ein-/Ausschalten als JSON an `haus/pumpwerk/ereignis` (nicht retained). Die Bridge
+abonniert das Topic, legt jedes Ereignis in eine Warteschlange und schickt sie gebündelt
+(höchstens 200 je Aufruf, alle paar Sekunden) per HTTPS-POST an `pumpwerk.ts` im Val
+**GrosjeansHomeDashboard** (Val Town). Dort steht jedes Ereignis als Zeile in SQLite, das
+Dashboard liest sie von da. ThingSpeak läuft unabhängig davon unverändert weiter.
+
+- **Ausfallsicher:** Die Warteschlange liegt auf der SD-Karte (`/var/lib/hausbroker/pumpwerk_ereignisse.jsonl`)
+  und übersteht Neustart und Internetausfall. Bei Fehlern wird mit wachsender Pause (bis 5 min)
+  wiederholt. Dasselbe Ereignis speichert Val Town nur einmal. Wie viele Ereignisse noch
+  warten, steht in `haus/bridge/ereignisse_offen` (0 = alles gesendet).
+- **Grenze:** Ereignisse, die kommen, während die Bridge nicht läuft (z. B. beim Neustart des Pi),
+  gehen verloren. Der Logger sendet sie ohne Zustellgarantie. Die Pausen-Topics
+  `haus/pumpwerk/pause_*` bleiben davon unberührt.
+- **Einrichten (einmalig, die Passwörter trägst du selbst ein):**
+  1. Ein langes Zufallspasswort erzeugen, z. B. `openssl rand -hex 24`.
+  2. Im Val **GrosjeansHomeDashboard** die Umgebungsvariable `PUMPWERK_TOKEN` mit diesem Wert setzen.
+  3. Auf dem Pi in `/etc/hausbroker/bridge.env` bei `PUMPWERK_TOKEN=` denselben Wert eintragen
+     (`PUMPWERK_URL` steht schon da; `sudo ./setup.sh` trägt beide Zeilen in eine bestehende
+     Datei nach). Danach `sudo systemctl restart hausbroker-bridge`.
+  4. Prüfen: `journalctl -u hausbroker-bridge -f` zeigt bei jedem Ein-/Ausschalten
+     «Pumpwerk: Ereignis …» und kurz danach «… an Val Town gesendet». Meldet das Log HTTP 503,
+     fehlt `PUMPWERK_TOKEN` im Val, bei HTTP 401 stimmen die Passwörter nicht überein.
+- **Ohne Token ist die Weitergabe aus** (die Bridge macht dann nur, was sie vorher auch tat).
+
 ## Einrichtung
 
 ### 1. SD-Karte vorbereiten
