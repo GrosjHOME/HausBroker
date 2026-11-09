@@ -43,8 +43,9 @@
 
 <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
 <script>
-// Die Seite kommt direkt vom Broker (http://hausbroker.local:9001/) und verbindet sich
-// per ws:// mit demselben Port. Sie baut die Anzeige aus allem, was unter dem Filter
+// Die Seite kommt vom Pi (http://hausbroker.local:8080/, Dienst hausbroker-web) und
+// verbindet sich per ws:// mit dem WebSocket-Listener des Brokers auf Port 9001.
+// Sie baut die Anzeige aus allem, was unter dem Filter
 // ankommt: eine Karte pro Gruppe (die Ebene nach dem festen Teil des Filters,
 // z. B. haus/pv/... -> Gruppe "pv"), darin alle Topics mit Wert und Alter.
 
@@ -142,13 +143,13 @@ el('login').addEventListener('submit', e => {
   const i = fest.findIndex(t => t === '#' || t === '+');
   praefix = i > 0 ? fest.slice(0, i).join('/') + '/' : '';
   status('Verbinde ...');
-  client = mqtt.connect('ws://' + location.host + '/mqtt', {
+  client = mqtt.connect('ws://' + (location.hostname || 'hausbroker.local') + ':9001/mqtt', {
     username: el('user').value,
     password: el('pass').value,
     reconnectPeriod: 5000,
   });
   client.on('connect', () => {
-    status('Verbunden mit ' + location.host + ', abonniert: ' + filter);
+    status('Verbunden mit ' + (location.hostname || 'hausbroker.local') + ':9001' + ', abonniert: ' + filter);
     client.subscribe(filter, err => { if (err) status('Abonnieren fehlgeschlagen: ' + err.message); });
   });
   client.on('reconnect', () => status('Verbinde neu ...'));

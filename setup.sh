@@ -23,8 +23,6 @@ systemctl restart systemd-journald
 echo "== Mosquitto"
 install -m 644 "$REPO/mosquitto/hausbroker.conf" /etc/mosquitto/conf.d/hausbroker.conf
 install -m 640 -o root -g mosquitto "$REPO/mosquitto/hausbroker.acl" /etc/mosquitto/hausbroker.acl
-install -d -m 755 /opt/hausbroker/web
-install -m 644 "$REPO/web/index.html" /opt/hausbroker/web/index.html
 
 PASSWD=/etc/mosquitto/passwd
 [ -f "$PASSWD" ] || { touch "$PASSWD"; }
@@ -66,8 +64,17 @@ systemctl daemon-reload
 systemctl enable hausbroker-bridge
 systemctl restart hausbroker-bridge
 
+echo "== Weboberflaeche (Port 8080)"
+install -d -m 755 /opt/hausbroker/web
+install -m 644 "$REPO/web/index.html" /opt/hausbroker/web/index.html
+install -m 644 "$REPO/systemd/hausbroker-web.service" /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable hausbroker-web
+systemctl restart hausbroker-web
+
 echo
 echo "Fertig. Pruefen:"
-echo "  systemctl status mosquitto hausbroker-bridge"
+echo "  systemctl status mosquitto hausbroker-bridge hausbroker-web"
+echo "  Browser: http://hausbroker.local:8080/"
 echo "  journalctl -u hausbroker-bridge -f"
 echo "  mosquitto_sub -h localhost -u stefan -P <passwort> -t 'haus/#' -v"
