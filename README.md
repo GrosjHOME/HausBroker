@@ -7,7 +7,7 @@ und sprechen deshalb nur noch mit dem lokalen Broker.
 
 ```text
                  Internet (HTTPS)
-   Val Town ─────────────┐        ThingSpeak  (später: Bridge schreibt dorthin)
+   Val Town ◄───────────►┐        ThingSpeak  (später: Bridge schreibt dorthin)
                          │
                 ┌────────▼─────────┐
                 │ Raspberry Pi     │
@@ -16,24 +16,32 @@ und sprechen deshalb nur noch mit dem lokalen Broker.
                 └────────┬─────────┘
                          │ MQTT (Heimnetz, ohne TLS)
         ┌────────────────┼────────────────┐
-  Austragungssteuerung   Boiler, PV, …  (Migration Schritt für Schritt)
+  Austragungssteuerung, Boiler, PV, Pumpwerk  (Wallbox: offen)
 ```
+
+Die Bridge arbeitet in beide Richtungen: Sie holt Werte aus Val Town und stellt sie lokal bereit
+(Asche-Prognose), und sie schickt Ereignisse der Steuerungen nach Val Town (Pumpwerk).
 
 Fällt das Internet aus, läuft alles Lokale weiter; nur Werte aus der Cloud
 werden alt. Jede Steuerung muss auch **ohne den Pi** sinnvoll weiterlaufen
 (lokale Schutzfunktionen bleiben in der Steuerung).
 
-## Stand: PoC Aschebox
+## Stand
 
-Die Prognose der Aschebox (Wächter in Val Town, siehe Repo
+**Asche-Prognose (PoC):** Die Prognose der Aschebox (Wächter in Val Town, siehe Repo
 `StefansHomeDashboard`) kommt per MQTT an die Austragungssteuerung, die sie
 auf dem LCD und an der Störlampe anzeigt.
+
+**Messwerte:** PV-Anlage, Boiler und Pumpwerk veröffentlichen ihre Werte zusätzlich zu ThingSpeak per MQTT (Tabelle unten);
+der Boiler nimmt die PV-Leistung zuerst vom Broker. Die Ereignisse des Pumpwerks (exakte Pausen) gibt die Bridge an Val Town weiter
+(Abschnitt «Pumpwerk-Ereignisse nach Val Town»).
 
 | Topic | Retained | Nutzlast | Wer |
 |---|---|---|---|
 | `haus/heizung/asche` | ja | `<prozent>;<tage_bis_voll>` z. B. `87;2` | Bridge → Austragungssteuerung |
 | `haus/heizung/asche/json` | ja | ganze Prognose aus Val Town (JSON) | Bridge |
 | `haus/bridge/online` | ja | `1` / `0` (Last Will) | Bridge |
+| `haus/bridge/ereignisse_offen` | ja | Anzahl Pumpwerk-Ereignisse, die noch nicht an Val Town gesendet sind (`0` = alles gesendet) | Bridge |
 | `haus/heizung/online` | ja | `1` / `0` (Last Will) | Austragungssteuerung |
 | `haus/pv/leistung` | **nein** | aktuelle PV-Leistung in W, z. B. `2400` (`0` nachts), alle 2 s | PV-Anlage → Boilersteuerung |
 | `haus/pv/energie/tag` `…/monat` `…/jahr` `…/gestern` `…/letzter_monat` | ja | Energie in kWh, eine Nachkommastelle, einmal pro Minute | PV-Anlage |
