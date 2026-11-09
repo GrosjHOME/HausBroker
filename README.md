@@ -113,11 +113,13 @@ mosquitto_sub -h localhost -u stefan -P <passwort> -t 'haus/#' -v
 Vom PC aus geht dasselbe mit `mosquitto_sub -h <ip-des-pi> …` oder einem
 MQTT-Programm wie MQTT Explorer.
 
-Im Browser geht es über WebSocket: z. B. mit MQTTX Web (<https://mqttx.app/web-client>)
-eine Verbindung anlegen mit Host `ws://hausbroker.local` (oder `ws://192.168.0.50`),
-Port `9001`, Pfad `/mqtt`, Benutzer und Passwort wie oben. Hinweis: Eine Seite, die
-über HTTPS geladen ist, darf kein unverschlüsseltes `ws://` öffnen – dann die
-http-Variante des Web-Clients nehmen oder MQTTX als Desktop-App.
+Im Browser: **<http://hausbroker.local:9001/>** (oder `http://192.168.0.50:9001/`)
+öffnen, Benutzer und Passwort eingeben. Die Seite durchsucht den MQTT-Baum unter
+`haus/#` und zeigt pro Gruppe (`heizung`, `pv`, `boiler`, `bridge`, …) eine Karte
+mit allen Werten und ihrem Alter; neue Topics erscheinen von selbst. Die Seite kommt
+direkt vom Broker und verbindet sich per WebSocket (`ws://…:9001/mqtt`) mit ihm.
+Fremde Web-Clients über HTTPS (z. B. MQTTX Web) funktionieren nicht, weil sie kein
+unverschlüsseltes `ws://` öffnen dürfen.
 
 Updates: `cd HausBroker && git pull && sudo ./setup.sh`.
 

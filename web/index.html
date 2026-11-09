@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HausBroker</title>
+<style>
+  :root { --bg:#f3f4f6; --karte:#fff; --text:#1f2937; --leise:#6b7280; --linie:#e5e7eb; --ok:#15803d; --alt:#b45309; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#111827; --karte:#1f2937; --text:#f3f4f6; --leise:#9ca3af; --linie:#374151; --ok:#4ade80; --alt:#fbbf24; }
+  }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: var(--bg); color: var(--text); }
+  h1 { font-size: 1.3em; margin: 0 0 12px; }
+  form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+  input, button { padding: 7px 9px; font: inherit; border: 1px solid var(--linie); border-radius: 6px; background: var(--karte); color: var(--text); }
+  button { cursor: pointer; }
+  #status { color: var(--leise); margin-bottom: 14px; font-size: .9em; }
+  #gruppen { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+  section { background: var(--karte); border-radius: 10px; padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  h2 { font-size: 1.05em; margin: 2px 0 6px; text-transform: capitalize; display: flex; justify-content: space-between; }
+  h2 small { font-weight: normal; color: var(--leise); text-transform: none; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 5px 4px; border-top: 1px solid var(--linie); vertical-align: top; font-size: .93em; }
+  td.name { color: var(--leise); width: 45%; word-break: break-word; }
+  td.wert { font-weight: 600; word-break: break-word; }
+  td.wert pre { margin: 0; font-weight: normal; font-size: .85em; white-space: pre-wrap; max-height: 12em; overflow: auto; }
+  td.alter { color: var(--leise); font-size: .8em; text-align: right; white-space: nowrap; width: 1%; }
+  tr.neu td.wert { color: var(--ok); }
+  tr.alt td.alter { color: var(--alt); }
+</style>
+</head>
+<body>
+<h1>HausBroker – MQTT live</h1>
+<form id="login">
+  <input id="user" placeholder="Benutzer" value="stefan" autocomplete="username" size="10">
+  <input id="pass" type="password" placeholder="Passwort" autocomplete="current-password" size="12">
+  <input id="filter" value="haus/#" size="10" title="Abonniertes Topic (Wildcard # erlaubt)">
+  <button>Verbinden</button>
+</form>
+<div id="status">Nicht verbunden</div>
+<div id="gruppen"></div>
+
+<script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
+<script>
+// Die Seite kommt direkt vom Broker (http://hausbroker.local:9001/) und verbindet sich
+// per ws:// mit demselben Port. Sie baut die Anzeige aus allem, was unter dem Filter
+// ankommt: eine Karte pro Gruppe (die Ebene nach dem festen Teil des Filters,
+// z. B. haus/pv/... -> Gruppe "pv"), darin alle Topics mit Wert und Alter.
+
+const el = id => document.getElementById(id);
+let client, praefix = '';
+const gruppen = {};   // name -> { karte, tbody, zeilen: { rest -> { tr, zeit } } }
+
+function status(t) { el('status').textContent = t; }
+
+function alterText(ms) {
+  const s = Math.round(ms / 1000);
+  if (s < 60) return s + ' s';
+  if (s < 3600) return Math.round(s / 60) + ' min';
+  if (s < 86400) return Math.round(s / 3600) + ' h';
+  return Math.round(s / 86400) + ' d';
+}
+
+function gruppeHolen(name) {
+  if (gruppen[name]) return gruppen[name];
+  const karte = document.createElement('section');
+  karte.innerHTML = '<h2><span></span><small></small></h2><table><tbody></tbody></table>';
+  karte.querySelector('h2 span').textContent = name;
+  karte.dataset.name = name;
+  const container = el('gruppen');
+  const nach = [...container.children].find(k => k.dataset.name > name);
+  container.insertBefore(karte, nach || null);
+  return gruppen[name] = { karte, tbody: karte.querySelector('tbody'), zeilen: {} };
+}
+
+function wertSetzen(td, text) {
+  td.textContent = '';
+  const t = text.trim();
+  if ((t.startsWith('{') || t.startsWith('[')) && t.length > 2) {
+    try {
+      const pre = document.createElement('pre');
+      pre.textContent = JSON.stringify(JSON.parse(t), null, 2);
+      td.appendChild(pre);
+      return;
+    } catch (e) { /* kein JSON, als Text zeigen */ }
+  }
+  td.textContent = text === '' ? '(leer)' : text;
+}
+
+function nachricht(topic, payload, retained) {
+  const rest = topic.startsWith(praefix) ? topic.slice(praefix.length) : topic;
+  const teile = rest.split('/');
+  const gname = teile.length > 1 ? teile[0] : '(allgemein)';
+  const name = teile.length > 1 ? teile.slice(1).join('/') : rest;
+  const g = gruppeHolen(gname);
+  let z = g.zeilen[name];
+  if (!z) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="name"></td><td class="wert"></td><td class="alter"></td>';
+    tr.cells[0].textContent = name;
+    tr.title = topic;
+    tr.dataset.name = name;
+    const nach = [...g.tbody.rows].find(r => r.dataset.name > name);
+    g.tbody.insertBefore(tr, nach || null);
+    z = g.zeilen[name] = { tr };
+  }
+  wertSetzen(z.tr.cells[1], payload);
+  // Retained beim Verbinden: Alter unbekannt, erst ab der ersten Live-Nachricht zaehlt es.
+  z.zeit = retained ? null : Date.now();
+  z.tr.cells[2].textContent = retained ? 'gesp.' : 'jetzt';
+  z.tr.cells[2].title = retained ? 'gespeicherter Wert (retained), Alter unbekannt' : '';
+  z.tr.classList.remove('alt');
+  if (!retained) {
+    z.tr.classList.add('neu');
+    clearTimeout(z.blink);
+    z.blink = setTimeout(() => z.tr.classList.remove('neu'), 1500);
+  }
+  g.karte.querySelector('h2 small').textContent = (n => n + (n === 1 ? ' Wert' : ' Werte'))(Object.keys(g.zeilen).length);
+}
+
+// Alter jede Sekunde nachfuehren; nach 10 min ohne Nachricht hervorheben.
+setInterval(() => {
+  const jetzt = Date.now();
+  for (const g of Object.values(gruppen))
+    for (const z of Object.values(g.zeilen)) {
+      if (z.zeit === null || z.zeit === undefined) continue;
+      const ms = jetzt - z.zeit;
+      z.tr.cells[2].textContent = ms < 1500 ? 'jetzt' : alterText(ms);
+      z.tr.classList.toggle('alt', ms > 10 * 60 * 1000);
+    }
+}, 1000);
+
+el('login').addEventListener('submit', e => {
+  e.preventDefault();
+  if (client) client.end(true);
+  for (const k in gruppen) delete gruppen[k];
+  el('gruppen').innerHTML = '';
+  const filter = el('filter').value.trim() || '#';
+  // fester Teil des Filters vor dem ersten Wildcard, z. B. "haus/#" -> "haus/"
+  const fest = filter.split('/');
+  const i = fest.findIndex(t => t === '#' || t === '+');
+  praefix = i > 0 ? fest.slice(0, i).join('/') + '/' : '';
+  status('Verbinde ...');
+  client = mqtt.connect('ws://' + location.host + '/mqtt', {
+    username: el('user').value,
+    password: el('pass').value,
+    reconnectPeriod: 5000,
+  });
+  client.on('connect', () => {
+    status('Verbunden mit ' + location.host + ', abonniert: ' + filter);
+    client.subscribe(filter, err => { if (err) status('Abonnieren fehlgeschlagen: ' + err.message); });
+  });
+  client.on('reconnect', () => status('Verbinde neu ...'));
+  client.on('error', err => status('Fehler: ' + err.message));
+  client.on('close', () => status('Verbindung getrennt'));
+  client.on('message', (t, msg, packet) => nachricht(t, msg.toString(), packet.retain));
+});
+</script>
+</body>
+</html>

@@ -23,6 +23,8 @@ systemctl restart systemd-journald
 echo "== Mosquitto"
 install -m 644 "$REPO/mosquitto/hausbroker.conf" /etc/mosquitto/conf.d/hausbroker.conf
 install -m 640 -o root -g mosquitto "$REPO/mosquitto/hausbroker.acl" /etc/mosquitto/hausbroker.acl
+install -d -m 755 /opt/hausbroker/web
+install -m 644 "$REPO/web/index.html" /opt/hausbroker/web/index.html
 
 PASSWD=/etc/mosquitto/passwd
 [ -f "$PASSWD" ] || { touch "$PASSWD"; }
