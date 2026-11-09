@@ -48,6 +48,7 @@ fi
 benutzer_anlegen heizung ""   # dieses Passwort kommt in Secrets.h der Austragungssteuerung
 benutzer_anlegen pv ""        # dieses Passwort kommt in Secrets.h der PV-Anlage
 benutzer_anlegen boiler ""    # dieses Passwort kommt in Secrets.h der Boilersteuerung
+benutzer_anlegen pumpwerk ""  # dieses Passwort kommt in Secrets.h des Pumpwerk-Loggers
 benutzer_anlegen stefan ""    # zum Mitlesen
 chmod 640 "$PASSWD"
 

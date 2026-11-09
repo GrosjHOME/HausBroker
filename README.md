@@ -46,6 +46,14 @@ auf dem LCD und an der Störlampe anzeigt.
 | `haus/boiler/pv_quelle` | ja | `mqtt` oder `thingspeak` | Boilersteuerung |
 | `haus/boiler/voll` | ja | `1` = Boiler voll geladen, sonst `0` | Boilersteuerung |
 | `haus/boiler/sensorfehler` | ja | `1` = Temperatursensor defekt, sonst `0` | Boilersteuerung |
+| `haus/pumpwerk/betrieb` `…/stoerung` | ja | `1` = Pumpe läuft / Störung aktiv, sonst `0`; wird bei jedem Wechsel sofort gesendet | Pumpwerk-Logger |
+| `haus/pumpwerk/einschaltungen_heute` `…/einschaltungen_gesamt` | ja | Anzahl Einschaltungen (ThingSpeak field2/field4) | Pumpwerk-Logger |
+| `haus/pumpwerk/laufzeit_heute_s` `…/laufzeit_gesamt_s` `…/laufzeit_gesamt_h` | ja | Laufzeit in s bzw. Dezimalstunden mit 3 Stellen (field3/field5) | Pumpwerk-Logger |
+| `haus/pumpwerk/stoerzeit_heute_s` `…/stoerzeit_gesamt_s` | ja | Störzeit in s (field7/field8) | Pumpwerk-Logger |
+| `haus/pumpwerk/status` | ja | Klartext `Pumpe ein` / `laeuft` / `aus` / `wartet` (ThingSpeak-Status) | Pumpwerk-Logger |
+| `haus/pumpwerk/pause_letzte_s` `…/pause_min_heute_s` `…/pause_min_gesamt_s` | ja | Pause zwischen zwei Einschaltungen in s, auf die Millisekunde gemessen: letzte, kürzeste heute, kürzeste seit Beginn (leer = noch keine gemessen) | Pumpwerk-Logger |
+| `haus/pumpwerk/ereignis` | **nein** | JSON je Ein-/Ausschalten: `{"typ":"start","t":<UTC-Epoche>,"pause_s":123.456}` bzw. `{"typ":"stopp","t":…,"lauf_s":12.345}` | Pumpwerk-Logger |
+| `haus/pumpwerk/online` | ja | `1` / `0` (Last Will) | Pumpwerk-Logger |
 
 `prozent` und `tage_bis_voll`: `-1` = unbekannt (keine Prognose, ausserhalb
 der Heizsaison oder Prognose älter als 120 min), `tage_bis_voll` `0` = jetzt
@@ -94,7 +102,7 @@ sudo ./setup.sh
 ```
 
 `setup.sh` installiert Mosquitto und die Bridge, legt die MQTT-Benutzer an
-(`bridge` mit Zufallspasswort, `heizung`, `pv`, `boiler` und `stefan` fragt es
+(`bridge` mit Zufallspasswort, `heizung`, `pv`, `boiler`, `pumpwerk` und `stefan` fragt es
 nach; bereits vorhandene Benutzer bleiben unverändert) und startet beide
 Dienste. Es darf mehrfach laufen. Jedes Passwort kommt in die `Secrets.h` der
 jeweiligen Steuerung.
@@ -145,7 +153,7 @@ Später, wenn alles läuft, eine der beiden Varianten:
 ## Nächste Schritte
 
 1. Weitere Steuerungen publizieren ihre Messwerte zusätzlich per MQTT
-   (PV-Anlage: erledigt; Boiler, Wallbox, Pumpwerk: offen).
+   (PV-Anlage, Boiler, Pumpwerk: erledigt; Wallbox: offen).
 2. Steuerungen, die heute über ThingSpeak Werte anderer Steuerungen holen,
    abonnieren sie lokal, ThingSpeak als Rückfall (Boiler: PV-Leistung,
    erledigt; Wallbox: offen).

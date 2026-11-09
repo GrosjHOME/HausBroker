@@ -20,6 +20,10 @@ topic read haus/pv/leistung
 topic read haus/pv/online
 topic write haus/boiler/#
 
+# Pumpwerk-Logger (Arduino Mega, Biral HPE Combo): schreibt seine Werte und Ereignisse (inkl. online + Last Will)
+user pumpwerk
+topic write haus/pumpwerk/#
+
 # Zum Mitlesen und Testen (mosquitto_sub auf dem Pi oder am PC)
 user stefan
 topic read haus/#
