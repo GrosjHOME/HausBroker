@@ -24,6 +24,10 @@ topic write haus/boiler/#
 user pumpwerk
 topic write haus/pumpwerk/#
 
+# Wallbox-Steuerung (Arduino Mega, Weidmueller): schreibt ihre Werte unter haus/wallbox/# (inkl. online + Last Will)
+user wallbox
+topic write haus/wallbox/#
+
 # Zum Mitlesen und Testen (mosquitto_sub auf dem Pi oder am PC)
 user stefan
 topic read haus/#
